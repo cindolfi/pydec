@@ -26,7 +26,7 @@ def simplicial_grid_2d(n):
     t2 = transpose(concatenate((matrix(arange(n)),matrix(arange(n+2,2*n+2)),matrix(arange(n+1,2*n+1))),axis=0))
     first_row = concatenate((t1,t2))
     
-    for i in xrange(n):       
+    for i in range(n):       
         indices[(2*n*i):(2*n*(i+1)),:] = first_row + i*(n+1)
     
     return (vertices,indices)

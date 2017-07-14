@@ -64,7 +64,7 @@ pressures = zeros(N2)
 b = b - A * concatenate((all_fluxes,pressures))
 # Remove entries of b corresponding to boundary fluxes and known pressure
 # Pressure at the right most triangle circumcenter is assumed known
-pressure_indices = range(N1, N1+N2)
+pressure_indices = list(range(N1, N1+N2))
 pressure_indices.remove(N1 + argmax(sc[2].circumcenter[:,0]))
 entries_to_keep = concatenate((internal_indices, pressure_indices))
 b = b[entries_to_keep]

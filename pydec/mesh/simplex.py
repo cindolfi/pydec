@@ -1,7 +1,7 @@
 __all__ = ['Simplex','SimplicialMesh','simplex','simplicial_mesh']
 
 from pydec.math import signed_volume,relative_parity,combinations
-from base_mesh import base_mesh
+from .base_mesh import base_mesh
 
 
 from scipy import asarray
@@ -62,7 +62,7 @@ class simplicial_mesh(base_mesh):
         elif len(args) == 1 and isinstance(args[0],dict):
             base_mesh.update(self,args[0])
         else:
-            raise ValueError,'unrecognized arguments'
+            raise ValueError('unrecognized arguments')
 
         if numpy.ndim(self['elements']) != 2 or numpy.ndim(self['vertices']) != 2:
             raise ValueError('index and vertex arrays must have rank 2')
@@ -99,7 +99,7 @@ class simplicial_mesh(base_mesh):
         format_str = '\t%-16s %16s %10s\n'
 
         output +=  format_str % ('Data Names'.center(16),'Shape'.center(16),'Size (KB)'.center(16))
-        for k,v in self.iteritems():
+        for k,v in self.items():
             output += format_str % (k,str(v.shape),str(v.nbytes/1024))
         return output      
     
@@ -168,7 +168,7 @@ class simplicial_mesh(base_mesh):
                     temp = row[0]
                     row[0] = row[1]
                     row[1] = temp
-            print "Flipped",num_flips,"simplices"
+            print("Flipped",num_flips,"simplices")
             return
 
         raise NotImplementedError
@@ -179,16 +179,16 @@ class simplicial_mesh(base_mesh):
         
         faces = self.skeleton(self.manifold_dimension() - 1)
         face_to_simplex = dict.fromkeys(faces,set())
-        for simplex,index in simplex_to_index.iterkeys():
+        for simplex,index in simplex_to_index.keys():
             for b in simplex.boundary():
                 face_to_simplex[b].add(index)
             
         simplex_neigbors = [[]]*len(self['elements'])
-        for simplex,index in simplex_to_index.iterkeys():            
+        for simplex,index in simplex_to_index.keys():            
             for b in simplex.boundary():
                 simplex_neigbors[index].append(face_to_simplex[b] - set([index]))
         
-        print simplex_neighbors
+        print(simplex_neighbors)
                 
 
 #for backwards compatibility

@@ -14,10 +14,10 @@ class kd_tree:
     def __repr__(self):
         output = ""
         return "kd_tree< %s points in %s-dimensions >"% (self.num_points,self.k)
-    
+
     def __init__(self, points, values=None):
         """kD-Tree spatial data structure
-    
+
         Parameters
         ----------
         points : array-like
@@ -51,24 +51,24 @@ class kd_tree:
             raise ValueError('points must all have the same dimension')
 
         if values is None:
-            values = range(len(points))
+            values = list(range(len(points)))
         if len(points) != len(values):
             raise ValueError('points and values must have the same lengths')
-        
+
         self.k = min_dim
         self.num_points = len(points)
-        
-        self.root = self.__build(zip(points,values),depth=0)
+
+        self.root = self.__build(list(zip(points,values)),depth=0)
 
     def __build(self,pv_pairs,depth):
         if not pv_pairs:
             return None
-        
+
         axis = depth % self.k #cycle axis
-        
+
         pv_pairs.sort(key=lambda x: x[0][axis])
-        
-        mid = len(pv_pairs) / 2
+
+        mid = len(pv_pairs) // 2
 
         node = self.node()
         node.axis  = axis
@@ -80,7 +80,7 @@ class kd_tree:
 
     def nearest(self, point, max_dist=float('inf')):
         """Returns the value associated with the nearest points to a given location
-        
+
         Parameters
         ----------
         point : array-like
@@ -133,18 +133,18 @@ class kd_tree:
             max_points = float('inf')
 
         return self.nearest_n(point, n=max_points, max_dist=radius)
-    
+
 
     def nearest_n(self, point, n, max_dist=float('inf')):
         """Returns the values of the nearest n points to a given location
-        
+
         Parameters
         ----------
         point : array-like
             Location in space, e.g. [1.5, 2.0]
         n : integer
             (Maximum) Number of values to return.  Will return
-            fewer than n values if the kd_tree contains fewer 
+            fewer than n values if the kd_tree contains fewer
             than n points.
 
         Optional Parameters
@@ -179,7 +179,7 @@ class kd_tree:
             if len(heap) == n:
                 max_dist = min(-heap[0][0],max_dist)
 
-        
+
         if sep_dist < 0:
             max_dist = self.__nearest_n(point,n,max_dist,current.left_child,heap)
         else:
@@ -193,7 +193,7 @@ class kd_tree:
                 return self.__nearest_n(point,n,max_dist,current.left_child,heap)
         else:
             return max_dist
-            
+
 ##def inorder(x):
 ##    if x is not None:
 ##        return inorder(x.left_child) + [x.value] + inorder(x.right_child)

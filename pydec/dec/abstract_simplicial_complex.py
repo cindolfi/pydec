@@ -1,7 +1,7 @@
 from numpy import zeros, ones, arange, array, asarray, hstack, vstack, empty, lexsort, atleast_2d, alltrue
 from scipy import sparse
 
-from simplex_array import simplex_array_parity, simplex_array_boundary, simplex_array_searchsorted
+from .simplex_array import simplex_array_parity, simplex_array_boundary, simplex_array_searchsorted
 
 __all__ = ['abstract_simplicial_complex']
 
@@ -39,13 +39,13 @@ class abstract_simplicial_complex:
 
         # find top simplex dimension
         D = max([s.shape[1] for s in simplices]) - 1
-         
+
         # convert simplices list to canonical simplex_array list representation
         old_simplices = simplices
         simplices = [None] * (D + 1)
         for s in old_simplices:
             simplices[s.shape[1] - 1] = s
-       
+
 
         # top most simplex array
         s = simplices[-1].copy()
@@ -66,25 +66,25 @@ class abstract_simplicial_complex:
 
                 # merge user-defined faces with boundary faces
                 s = vstack((s,simplices[d]))
-                
+
                 # sort rows to bring equivalent elements together
                 s = s[lexsort(s.T[::-1])]
 
                 # find unique simplices
-                mask = -hstack((array([False]),alltrue(s[1:] == s[:-1],axis=1)))
+                mask = ~hstack((array([False]),alltrue(s[1:] == s[:-1],axis=1)))
                 s = s[mask]
 
                 # indices of the boundary faces in the full face array
                 remap = simplex_array_searchsorted(s, old_s)
-                
+
                 # remap indices of boundary operator
                 B = B.tocoo(copy=False)
                 B = sparse.coo_matrix((B.data, (remap[B.row], B.col)), (s.shape[0], B.shape[1]))
                 B = B.tocsr()
-            
+
             # faces are already in canonical format, so parity is even
             parity = zeros(s.shape[0],dtype=s.dtype)
-            
+
             simplices[d]       = s
             chain_complex[d+1] = B
 
@@ -95,7 +95,7 @@ class abstract_simplicial_complex:
         # store the cochain complex
         Bn = chain_complex[-1]
         cochain_complex  = [ B.T for B in chain_complex[1:] ]
-        cochain_complex += [ sparse.csc_matrix( (1, Bn.shape[1]), dtype=Bn.dtype) ] 
+        cochain_complex += [ sparse.csc_matrix( (1, Bn.shape[1]), dtype=Bn.dtype) ]
 
         # store the data members
         self.simplices = simplices
@@ -113,5 +113,5 @@ class abstract_simplicial_complex:
 
     def cochain_complex(self):
         return self._cochain_complex
-        
+
 

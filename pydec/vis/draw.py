@@ -145,7 +145,7 @@ def simplex_quivers(sc,form):
         indices = [s_to_i[x] for x in edges]
         values  = [form[i] for i in indices]
 
-        for e,v in zip(combinations(range(len(verts)),2),values):
+        for e,v in zip(combinations(list(range(len(verts))),2),values):
             quiver_dirs[n,:] += v*(d_lambda[e[1]] - d_lambda[e[0]])
 
 

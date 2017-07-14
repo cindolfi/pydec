@@ -31,7 +31,7 @@ class test_simplicial_mesh(TestCase):
         boundaries.append([simplex([1,0,2]),simplex([0,1,3]),simplex([2,0,3]),simplex([1,2,3])])
         boundaries.append([simplex([1,0,2]),simplex([0,1,3]),simplex([2,0,3]),simplex([2,3,4]),simplex([1,4,3]),simplex([1,2,4])])
         
-        cases = zip(self.meshes,boundaries)
+        cases = list(zip(self.meshes,boundaries))
         
         for (v,s),b in cases:
             sm = simplicial_mesh(v,s)                           

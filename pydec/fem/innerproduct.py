@@ -46,7 +46,7 @@ def massmatrix_rowcols(complex,k):
         cols = arange(num_simplices,dtype=simplices.dtype)
         return rows,cols
     
-    k_faces = [tuple(x) for x in combinations(range(p+1),k+1)]
+    k_faces = [tuple(x) for x in combinations(list(range(p+1)),k+1)]
 
     faces_per_simplex = len(k_faces)
     num_faces = num_simplices*faces_per_simplex
@@ -84,16 +84,16 @@ def whitney_innerproduct(complex,k):
    
     scale_integration = (factorial(k)**2)/((p + 2)*(p + 1))   
     
-    k_forms = [tuple(x) for x in combinations(range(p+1),k)]
-    k_faces = [tuple(x) for x in combinations(range(p+1),k+1)]
+    k_forms = [tuple(x) for x in combinations(list(range(p+1)),k)]
+    k_faces = [tuple(x) for x in combinations(list(range(p+1)),k+1)]
 
     num_k_forms = len(k_forms)
     num_k_faces = len(k_faces)
 
     k_form_pairs = [tuple(x) for x in combinations(k_forms,2)] + [(x,x) for x in k_forms]
     num_k_form_pairs = len(k_form_pairs)
-    k_form_pairs_to_index = dict(zip(k_form_pairs,range(num_k_form_pairs)))
-    k_form_pairs_to_index.update(zip([x[::-1] for x in k_form_pairs],range(num_k_form_pairs)))
+    k_form_pairs_to_index = dict(list(zip(k_form_pairs,list(range(num_k_form_pairs)))))
+    k_form_pairs_to_index.update(list(zip([x[::-1] for x in k_form_pairs],list(range(num_k_form_pairs)))))
     num_k_face_pairs = num_k_faces**2
 
 
@@ -119,7 +119,7 @@ def whitney_innerproduct(complex,k):
 
                    dets_to_vals[row_index,col_index] += (-1)**(n+m)*((face1[n] == face2[m]) + 1)                 
 
-    k_face_pairs_to_index = dict(zip(k_face_pairs,range(num_k_faces**2)))
+    k_face_pairs_to_index = dict(list(zip(k_face_pairs,list(range(num_k_faces**2)))))
     dets_to_vals = dets_to_vals.tocsr()
     ## END PRECOMPUTATION
 
@@ -176,7 +176,7 @@ def regular_cube_innerproduct(rcc,k):
     N = rcc.complex_dimension()
 
     #standard cube is [0,0,..,0] [0,1,...,N]   
-    standard_cube  = atleast_2d(array([0]*N + range(N),dtype='i'))
+    standard_cube  = atleast_2d(array([0]*N + list(range(N)),dtype='i'))
     standard_k_faces = standard_cube
     for i in range(N,k,-1):        
         standard_k_faces = cube_array_boundary(standard_k_faces,i)[0]

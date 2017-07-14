@@ -46,7 +46,7 @@ def test_random():
             for sample in (20*rand(5,dim) - 10).tolist(): 
                 #5 sample points per test
                 distances = sqrt(sum((pts - sample)**2,axis=1))
-                sorted_pairs = sorted(zip(distances,range(len(pts))))
+                sorted_pairs = sorted(zip(distances,list(range(len(pts)))))
 
                 assert_equal(kdt.nearest(sample),sorted_pairs[0][1])
         

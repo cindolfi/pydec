@@ -1,10 +1,12 @@
 __all__ = ['read_array','write_array','read_header']
 
-#from scipy.io import read_array,write_array
+
 from scipy import shape,ndim
 import numpy
 import scipy
 import sys
+import io
+
 
 
 class ArrayIOException(Exception):
@@ -12,13 +14,13 @@ class ArrayIOException(Exception):
     def __str__(self): return self.msg
 
 class FileFormatError(ArrayIOException): pass
-      
 
-class ArrayHeader(dict):    
-    def tostring(self):        
+
+class ArrayHeader(dict):
+    def tostring(self):
         self['version'] = '1.0'
         output = str(len(self)) + '\n'
-        for key,value in self.iteritems():
+        for key,value in self.items():
             output += key
             output += '='
             output += str(value)
@@ -26,12 +28,13 @@ class ArrayHeader(dict):
         return output
 
 
-    
+
+
 #---user functions---#000000#FFFFFF-------------------------------------------------------
 def read_array(fid):
     """
     Read an ndarray or sparse matrix from file.
-    
+
     ASCII formats
         basic
         ndarray
@@ -39,25 +42,28 @@ def read_array(fid):
     BINARY formats
         ndarray
         sparse
-        
+
         Notes:
             ndarray IO makes use to ndarray.tofile() and fromfile()
-            
+
             The following sparse matrix formats are supported:
                 csr_matrix
                 csc_matrix
                 coo_matrix
     """
+    if not isinstance(fid, io.IOBase):
+        fid = open(fid, 'rb')
 
-    if type(fid) is not file:  fid = open(fid)
-    
     header = read_header(fid)
-    
-    try: format = header['format']
-    except: raise FileFormatError('File format unspecified in file')
-    if format not in ['','basic','ascii','binary']: raise FileFormatError('Unknown format: ['+format+']')    
-    
-    
+
+    try:
+        format = header['format']
+    except:
+        raise FileFormatError('File format unspecified in file')
+
+    if format not in ['','basic','ascii','binary']:
+        raise FileFormatError('Unknown format: ['+format+']')
+
     if format == 'basic':
         return read_basic(fid,header)
     else:
@@ -65,22 +71,21 @@ def read_array(fid):
             array_type = header['type']
         except KeyError:
             raise FileFormatError('Array type unspecified in file: ['+fid.name+']')
-        
+
         if array_type == 'ndarray':
-            return read_ndarray(fid,header)    
+            return read_ndarray(fid,header)
         elif array_type == 'sparse':
             return read_sparse(fid,header)
         else:
             raise FileFormatError('Unknown array type: ['+array_type+']')
-    
 
 
 def write_array(fid,A,format='binary'):
     """
     Write an ndarray or sparse matrix to a file
-    
+
         format may be one of ['basic','ascii','binary']
-        
+
         basic
             - Most human readable
             - Only works for arrays of rank 1 and 2
@@ -92,88 +97,100 @@ def write_array(fid,A,format='binary'):
             - Fastest format
             - Works for ndarrays and sparse matrices
             - Data stored in LittleEndian
-    """   
-        
-    if format not in ['basic','ascii','binary']: raise ArrayIOException('Unknown format: ['+format+']')
-   
-    if type(fid) is not file: fid = open(fid,'wb')
-    
-    if type(A) is numpy.ndarray:
+    """
+
+    if format not in ['basic','ascii','binary']:
+        raise ArrayIOException('Unknown format: ['+format+']')
+
+    if not isinstance(fid, io.IOBase):
+        fid = open(fid,'wb')
+
+    if isinstance(A, numpy.ndarray):
         A = numpy.ascontiguousarray(A)  #strided arrays break in write
         if format == 'basic':
-            if ndim(A) > 2: raise ArrayIOException('basic format only works for rank 1 or 2 arrays')
+            if ndim(A) > 2:
+                raise ArrayIOException('basic format only works for rank 1 or 2 arrays')
             write_basic(fid,A)
-        else:            
+        else:
             write_ndarray(fid,A,format)
     elif scipy.sparse.isspmatrix(A):
-        if format not in ['ascii','binary']: raise ArrayIOException('sparse matrices require ascii or binary format')
+        if format not in ['ascii','binary']:
+            raise ArrayIOException('sparse matrices require ascii or binary format')
         write_sparse(fid,A,format)
     else:
         try:
             A = asarray(A)
             if format == 'basic':
-                if ndim(A) > 2: raise ArrayIOException('basic format only works for rank 1 or 2 arrays')
+                if ndim(A) > 2:
+                    raise ArrayIOException('basic format only works for rank 1 or 2 arrays')
                 write_basic(fid,A)
-            else:            
+            else:
                 write_ndarray(fid,A,format)
         except:
             raise ArrayIOException('Unknown data type and unable to convert to numpy.ndarray')
-        
-        
+
+
 def read_header(fid):
     """
     Read the header of an array file into a dictionary
     """
-    if type(fid) is not file: fid = open(fid)
-    
+    if not isinstance(fid, io.IOBase):
+        fid = open(fid)
+
     first_line = fid.readline()
     try:    numlines = int(first_line)
-    except: 
-        print 'firstline error: '+first_line
+    except:
+        print('firstline error: '+first_line)
         raise ArrayIOException()
-    
-    #numlines = int(fid.readline())
+
     header = ArrayHeader()
     for i in range(numlines):
-        line = fid.readline().rstrip()
+        line = fid.readline().decode('utf-8')
+        line = line.rstrip()
         parts = line.split('=')
         if len(parts) != 2: raise FileFormatError('File header error: line #'+str(i)+' ['+line+']')
         header[parts[0]] = parts[1]
     return header
-    
+
 
 
 #---basic---#000000#FFFFFF------------------------------------------------------
 def basic_header(A):
-    header = ArrayHeader()   
+    header = ArrayHeader()
     header['dims'] = ','.join(map(str,A.shape))
     header['dtype'] = A.dtype.name
     return header
 
 def read_basic(fid,header):
-    try:    dimensions = map(int,header['dims'].split(','))
-    except: raise FileFormatError('Unable to determine dims')
+    try:
+        dimensions = list(map(int,header['dims'].split(',')))
+    except:
+        raise FileFormatError('Unable to determine dims')
 
-    try: dtype = numpy.typeDict[header['dtype']]
-    except: raise FileFormatError('Unable to determine dtype')
-    
-    if len(dimensions) != 2: raise FileFormatError('basic format only supports 2d arrays')
-    if min(dimensions) < 1: raise FileFormatError('all dimensions must be positive')      
-   
-    return numpy.fromfile(fid,dtype=dtype,count=numpy.prod(dimensions),sep=' ').reshape(dimensions)  
-    
-def write_basic(fid,A):    
+    try:
+        dtype = numpy.typeDict[header['dtype']]
+    except:
+        raise FileFormatError('Unable to determine dtype')
+
+    if len(dimensions) != 2:
+        raise FileFormatError('basic format only supports 2d arrays')
+    if min(dimensions) < 1:
+        raise FileFormatError('all dimensions must be positive')
+
+    return numpy.fromfile(fid,dtype=dtype,count=numpy.prod(dimensions),sep=' ').reshape(dimensions)
+
+def write_basic(fid,A):
     A = numpy.atleast_2d(A) #force 1d arrays to 2d
     header = basic_header(A)
     header['format'] = 'basic'
-    fid.write(header.tostring())
+    fid.write(header.tostring().encode('utf-8'))
     for row in A:
         row.tofile(fid,sep=' ',format='%.16g')
-        fid.write('\n')
-    
+        fid.write('\n'.encode('utf-8'))
 
-    
-#---ndarray---#000000#FFFFFF-------------------------------------------------   
+
+
+#---ndarray---#000000#FFFFFF-------------------------------------------------
 def ndarray_header(A):
     header = ArrayHeader()
     header['type'] = 'ndarray'
@@ -185,8 +202,8 @@ def ndarray_header(A):
 def read_ndarray(fid,header):
     try:    rank = int(header['rank'])
     except: raise FileFormatError('Unable to determine rank')
-    
-    try:    dims = map(int,header['dims'].split(','))
+
+    try:    dims = list(map(int,header['dims'].split(',')))
     except: raise FileFormatError('Unable to determine dims')
 
     try:    dtype = numpy.typeDict[header['dtype']]
@@ -194,13 +211,13 @@ def read_ndarray(fid,header):
 
     try:    format = header['format']
     except: raise FileFormatError('Unable to determine format')
-        
+
     if len(dims) != rank or min(dims) < 0: raise FileFormatError('Invalid dims')
-    
-    
+
+
     if format == 'ascii': sep = ' '
     else: sep = ''
-   
+
     if format == 'ascii':
         return numpy.fromfile(fid,dtype=dtype,count=numpy.prod(dims),sep=' ').reshape(dims)
     else:
@@ -212,16 +229,17 @@ def read_ndarray(fid,header):
 def write_ndarray(fid,A,format):
     header = ndarray_header(A)
     header['format'] = format
-    fid.write(header.tostring())    
+    fid.write(header.tostring().encode('utf-8'))
 
-    if format == 'binary':      
+    if format == 'binary':
         if sys.byteorder == 'little':
             A.tofile(fid)
         else:
             A.byteswap().tofile(fid)
-    elif format == 'ascii':        
+    elif format == 'ascii':
         A.tofile(fid,sep=' ',format='%.16g')
-        if A.size > 0: fid.write('\n') #only introduce newline when something has been written
+        if A.size > 0:
+            fid.write('\n'.encode('utf-8')) #only introduce newline when something has been written
     else:
         raise ArrayIOException('Unknown file format: ['+format+']')
 
@@ -234,20 +252,20 @@ def sparse_header(A):
     header = ArrayHeader()
     header['type'] = 'sparse'
     header['sptype'] = A.format
-    header['dims'] = ','.join(map(str,A.shape))    
+    header['dims'] = ','.join(map(str,A.shape))
     return header
-    
-def read_sparse(fid,header):    
-    try:    dims = map(int,header['dims'].split(','))
+
+def read_sparse(fid,header):
+    try:    dims = list(map(int,header['dims'].split(',')))
     except: raise FileFormatError('Unable to determine dims')
 
     try:    format = header['sptype']
     except: raise FileFormatError('Unable to determine sparse format')
-        
+
     if len(dims) != 2 or min(dims) < 1: raise FileFormatError('Invalid dims')
-    
+
     if header['sptype'] not in supported_sparse_formats:  raise ArrayIOException('Only '+str(supported_sparse_formats)+' are supported')
-    
+
     if header['sptype'] == 'csr':
         data   = read_array(fid)
         colind = read_array(fid)
@@ -264,14 +282,14 @@ def read_sparse(fid,header):
         col  = read_array(fid)
         return scipy.sparse.coo_matrix((data,(row,col)),dims)
 
-        
+
 def write_sparse(fid,A,format):
     if A.format not in supported_sparse_formats: raise ArrayIOException('Only '+str(supported_sparse_formats)+' are supported')
-    
+
     header = sparse_header(A)
     header['format'] = format
-    fid.write(header.tostring())
-    
+    fid.write(header.tostring().encode('utf-8'))
+
     if A.format == 'csr':
         write_array(fid,A.data,format)
         write_array(fid,A.indices,format)
@@ -287,5 +305,5 @@ def write_sparse(fid,A,format):
     else:
         assert(false)
 
-        
-    
+
+

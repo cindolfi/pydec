@@ -24,14 +24,14 @@ def cube_array_search(k_face_array,k_faces):
 
     """
     if ndim(k_face_array) != 2 or ndim(k_faces) != 2:
-        raise ValueError,'expected rank 2 arrays'
+        raise ValueError('expected rank 2 arrays')
 
     if k_face_array.shape[1] != k_faces.shape[1]:
-        raise ValueError,'number of columns must agree'
+        raise ValueError('number of columns must agree')
 
-    # a dense array used to lookup k_face_array row indices 
+    # a dense array used to lookup k_face_array row indices
     lookup_grid_dimensions = k_face_array.max(axis=0) + 1
-    
+
     lookup_grid = empty(lookup_grid_dimensions,dtype=k_faces.dtype)
     lookup_grid[:] = -1
     lookup_grid[hsplit(k_face_array,k_face_array.shape[1])] = arange(k_face_array.shape[0],dtype=k_faces.dtype).reshape((-1,1))
@@ -69,10 +69,10 @@ def cube_array_boundary(cubes,dim):
         rows[arange(rows.shape[0]),cubes[:,top_dim+i]] += 1
 
     #sort rows
-    faces = faces[lexsort([faces[:,i] for i in reversed(range(faces.shape[1]-2))])]
+    faces = faces[lexsort([faces[:,i] for i in reversed(list(range(faces.shape[1]-2)))])]
 
     #find unique faces
-    face_mask = -hstack((array([False]),alltrue(faces[1:,:-2] == faces[:-1,:-2],axis=1)))
+    face_mask = ~hstack((array([False]),alltrue(faces[1:,:-2] == faces[:-1,:-2],axis=1)))
 
     unique_faces = faces[face_mask,:-2].copy()
 

@@ -8,3 +8,4 @@
 dist
 build
 __svn_version__.py
+__pycache__

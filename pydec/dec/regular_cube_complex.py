@@ -4,7 +4,7 @@ from scipy import ones, ndim
 import scipy
 
 from pydec.mesh import regular_cube_mesh
-from cube_array import cube_array_boundary
+from .cube_array import cube_array_boundary
 
 class regular_cube_complex(list):
     """
@@ -15,7 +15,7 @@ class regular_cube_complex(list):
 
     def __init__(self,mesh):
         if not isinstance(mesh,regular_cube_mesh):
-            raise ValueError,'expected a regular_cube_mesh'
+            raise ValueError('expected a regular_cube_mesh')
 
         self.mesh = mesh
 
@@ -30,7 +30,7 @@ class regular_cube_complex(list):
         output += "regular_cube_complex:\n"
         output += "  Shape:   " + str(self.mesh.bitmap.shape) + "\n"
         output += "  Complex:\n"
-        for i in reversed(range(len(self))):
+        for i in reversed(list(range(len(self)))):
             output += "   %10d: %2d-D cubes\n" % (self[i].cube_array.shape[0],i)
         return output
 
@@ -58,7 +58,7 @@ class regular_cube_complex(list):
 
         self[-1].cube_array = self.mesh.cube_array()
 
-        for i in reversed(range(self.complex_dimension())):
+        for i in reversed(list(range(self.complex_dimension()))):
             faces,boundary = cube_array_boundary(self[i+1].cube_array,i+1)
             self[i  ].cube_array = faces
             self[i+1].boundary   = boundary

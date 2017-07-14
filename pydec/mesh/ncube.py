@@ -1,7 +1,7 @@
 __all__ = ['nCube','nCubeMesh','RegularCubeMesh']
 
 from numpy import ndarray,array,asarray,ndim,bitwise_xor,eye,hstack,vstack,arange,zeros
-from simplex import Simplex
+from .simplex import Simplex
 
 
 
@@ -98,7 +98,7 @@ class nCube:
              True if opposite orientation
         """
         if self.corner_simplex != other.corner_simplex:
-            raise ValueError,'Cubes do not share the same vertices'
+            raise ValueError('Cubes do not share the same vertices')
         return self.corner_simplex.parity ^ other.corner_simplex.parity
 
 
